@@ -1,0 +1,11 @@
+[module-shared-userspace]
+name=Repository for the Shared Userspace module
+baseurl=https://kojipkgs.fedoraproject.org/repos/module-@SHARED_USERSPACE_MODULE_HASH@/latest/${basearch}/
+enabled=1
+gpgcheck=0
+
+[module-postgresql]
+name=Repository for the PostgreSQL module
+baseurl=https://kojipkgs.fedoraproject.org/repos/module-@POSTGRESQL_MODULE_HASH@/latest/${basearch}/
+enabled=1
+gpgcheck=0
