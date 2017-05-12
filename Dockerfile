@@ -47,20 +47,20 @@ EXPOSE 5432
 ADD root /
 
 # Update packages so everything available is current
-RUN dnf update -y --setopt=tsflags=nodocs
+RUN dnf update -y --setopt=tsflags=nodocs && dnf --enablerepo=\* -y clean all
 
 # Need to have charset files
-RUN dnf install -y glibc-locale-source
+RUN dnf install -y glibc-locale-source && dnf --enablerepo=\* -y clean all
 
 # orchestration scripts:
 # find
-RUN dnf install -y findutils
+RUN dnf install -y findutils && dnf --enablerepo=\* -y clean all
 # /usr/bin/envsubst
-RUN dnf install -y gettext
+RUN dnf install -y gettext && dnf --enablerepo=\* -y clean all
 # nss_wrapper.so
-RUN dnf install -y nss_wrapper
+RUN dnf install -y nss_wrapper && dnf --enablerepo=\* -y clean all
 # python
-RUN dnf install -y /usr/bin/python
+RUN dnf install -y /usr/bin/python && dnf --enablerepo=\* -y clean all
 
 # Install the postgresql server component.
 #
