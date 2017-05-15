@@ -3,10 +3,9 @@
 # This should probably rather be something like...:
 # FROM registry.fedoraproject.org/module-base-runtime:26
 # ...and probably would:
-# - contain microdnf rather than dnf
 # - not have any repositories configured
 # - need a shared-userspace module repo enabled
-FROM registry.fedoraproject.org/fedora:26
+FROM baseruntime/baseruntime:latest
 
 # PostgreSQL container image
 # Exposed ports:
@@ -19,11 +18,13 @@ ENV NAME=postgresql \
     VERSION=0 \
     RELEASE=1 \
     ARCH=x86_64 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
     POSTGRESQL_VERSION=9.6 \
-    LANG=en_US.UTF-8 \
-    LC_ALL=en_US.UTF-8 \
     HOME=/var/lib/pgsql \
-    PGUSER=postgres
+    PGUSER=postgres \
+    POSTGRESQL_MODULE_HASH=5a0a295c9673c2a1 \
+    SHARED_USERSPACE_MODULE_HASH=e67c1e728d6aa7be
 
 LABEL summary = "PostgreSQL is an object-relational DBMS." \
       name = "$FGC/$NAME" \
@@ -46,34 +47,43 @@ EXPOSE 5432
 
 ADD root /
 
-# Update packages so everything available is current
-RUN dnf update -y --setopt=tsflags=nodocs
-
-# Need to have charset files
-RUN dnf install -y glibc-locale-source
-
-# orchestration scripts:
-# find
-RUN dnf install -y findutils
-# /usr/bin/envsubst
-RUN dnf install -y gettext
-# nss_wrapper.so
-RUN dnf install -y nss_wrapper
-# python
-RUN dnf install -y /usr/bin/python
+COPY module-postgresql.repo.in /tmp/module-postgresql.repo.in
 
 # Install the postgresql server component.
 #
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN INSTALL_PKGS="postgresql postgresql-server" && \
-    dnf install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
+
+# Notes about the below:
+# - first sed cmd: don't ask
+# - rpm -e ... microdnf install systemd: workaround to missing
+#   microdnf downgrade/distro-sync
+# - Update packages so everything available is current
+# - Need to have charset files, disable normal repo(s), enable module repo(s)
+# ORCHESTRATION:
+# - Newer versions of the shared-userspace module are supposed to have
+#   findutils, not there yet
+# - gettext: /usr/bin/envsubst
+# - no working python module yet
+
+RUN \
+    sed -i 's|/jkaluza/|/ralph/|g' /etc/yum.repos.d/build.repo && \
+    rpm -e --justdb --nodeps systemd-libs && \
+    microdnf install -y --setopt=tsflags=nodocs systemd && \
+    # microdnf update -y --setopt=tsflags=nodocs && \
+    # microdnf install -y glibc-locale-source && \
+    microdnf install -y findutils && \
+    microdnf install -y gettext && \
+    # microdnf install -y nss_wrapper && \
+    # microdnf install -y /usr/bin/python && \
+    sed 's|@POSTGRESQL_MODULE_HASH@|'${POSTGRESQL_MODULE_HASH}'|g; s|@SHARED_USERSPACE_MODULE_HASH@|'${SHARED_USERSPACE_MODULE_HASH}'|g; s|${basearch}|'${ARCH}'|g' < /tmp/module-postgresql.repo.in > /etc/yum.repos.d/module-postgresql.repo && rm -f /tmp/module-postgresql.repo.in && \
+    INSTALL_PKGS="postgresql postgresql-server" && \
+    microdnf install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
-    dnf --enablerepo=\* -y clean all && \
-    localedef -f UTF-8 -i en_US en_US.UTF-8 && \
-    test "$(id -u postgres)" = "26" && \
-    test "$(id -g postgres)" = "26" && \
+    microdnf -y clean all && \
+    # localedef -f UTF-8 -i en_US en_US.UTF-8 && \
+    test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
     mkdir -p /var/lib/pgsql/data && \
     /usr/libexec/fix-permissions /var/lib/pgsql && \
     /usr/libexec/fix-permissions /var/run/postgresql
