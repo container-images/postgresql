@@ -19,6 +19,8 @@
 #         to the same value as MAX_MEMORY_LIMIT_IN_BYTES, it means that
 #         there is no limit set. The value is taken from
 #         /sys/fs/cgroup/memory/memory.limit_in_bytes
+#     RAM_SIZE_IN_BYTES
+#         Available memory in bytes. The value is taken from /proc/meminfo.
 #     NUMBER_OF_CORES
 #         Number of detected CPU cores that can be used. This value is
 #         calculated from /sys/fs/cgroup/cpuset/cpuset.cpus
@@ -32,6 +34,28 @@ get_memory_limit() {
         echo "$limit"
     else
         echo "Warning: Can't detect memory limit from cgroups" >&2
+    fi
+}
+
+get_meminfo_ram_size() {
+    local limit="$(cat /proc/meminfo | while read key val unit rest; do if [ "$key" = "MemTotal:" ]; then echo "$val $unit"; break; fi; done)"
+    if [ $? -eq 0 ]; then
+        local val="${limit/ *}"
+        local unit="${limit/* }"
+        case "$unit" in
+            kB)
+                val=$(($val * 1024))
+                ;;
+            MB)
+                val=$(($val * 1024 * 1024))
+                ;;
+            GB)
+                val=$(($val * 1024 * 1024 * 1024))
+                ;;
+        esac
+        echo "$val"
+    else
+        echo "Warning: Can't detect RAM site from /proc/meminfo." >&2
     fi
 }
 
@@ -54,6 +78,7 @@ get_number_of_cores() {
 
 MAX_MEMORY_LIMIT_IN_BYTES=9223372036854775807
 MEMORY_LIMIT_IN_BYTES="$(get_memory_limit)"
+RAM_SIZE_IN_BYTES="$(get_meminfo_ram_size)"
 NUMBER_OF_CORES="$(get_number_of_cores)"
 
 echo "MAX_MEMORY_LIMIT_IN_BYTES=$MAX_MEMORY_LIMIT_IN_BYTES"
@@ -63,6 +88,10 @@ if [ -n "$MEMORY_LIMIT_IN_BYTES" ]; then
     if [ "$MEMORY_LIMIT_IN_BYTES" -ge "$MAX_MEMORY_LIMIT_IN_BYTES" ]; then
         echo "NO_MEMORY_LIMIT=true"
     fi
+fi
+
+if [ -n "$RAM_SIZE_IN_BYTES" ]; then
+    echo "RAM_SIZE_IN_BYTES=$RAM_SIZE_IN_BYTES"
 fi
 
 if [ -n "$NUMBER_OF_CORES" ]; then

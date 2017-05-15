@@ -6,14 +6,19 @@ export POSTGRESQL_MAX_PREPARED_TRANSACTIONS=${POSTGRESQL_MAX_PREPARED_TRANSACTIO
 # limits are set).
 # Users can still override this by setting the POSTGRESQL_SHARED_BUFFERS
 # and POSTGRESQL_EFFECTIVE_CACHE_SIZE variables.
-if [[ "${NO_MEMORY_LIMIT:-}" == "true" || -z "${MEMORY_LIMIT_IN_BYTES:-}" ]]; then
+if [[ "${NO_MEMORY_LIMIT:-}" == "true" || -z "${MEMORY_LIMIT_IN_BYTES:-}" || -z "${RAM_SIZE_IN_BYTES:-}" ]]; then
     export POSTGRESQL_SHARED_BUFFERS=${POSTGRESQL_SHARED_BUFFERS:-32MB}
     export POSTGRESQL_EFFECTIVE_CACHE_SIZE=${POSTGRESQL_EFFECTIVE_CACHE_SIZE:-128MB}
 else
+    if [ "$MEMORY_LIMIT_IN_BYTES" -gt "$RAM_SIZE_IN_BYTES" ]; then
+        mem_limit="$RAM_SIZE_IN_BYTES"
+    else
+        mem_limit="$MEMORY_LIMIT_IN_BYTES"
+    fi
     # Use 1/4 of given memory for shared buffers
-    shared_buffers_computed="$(($MEMORY_LIMIT_IN_BYTES/1024/1024/4))MB"
+    shared_buffers_computed="$(($mem_limit/1024/1024/4))MB"
     # Setting effective_cache_size to 1/2 of total memory would be a normal conservative setting,
-    effective_cache="$(($MEMORY_LIMIT_IN_BYTES/1024/1024/2))MB"
+    effective_cache="$(($mem_limit/1024/1024/2))MB"
     export POSTGRESQL_SHARED_BUFFERS=${POSTGRESQL_SHARED_BUFFERS:-$shared_buffers_computed}
     export POSTGRESQL_EFFECTIVE_CACHE_SIZE=${POSTGRESQL_EFFECTIVE_CACHE_SIZE:-$effective_cache}
 fi
