@@ -48,6 +48,7 @@ EXPOSE 5432
 ADD root /
 
 COPY module-postgresql.repo.in /tmp/module-postgresql.repo.in
+COPY run_tests.sh /usr/bin/run_tests.sh
 
 # Install the postgresql server component.
 #
