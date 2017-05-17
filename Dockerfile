@@ -23,8 +23,7 @@ ENV NAME=postgresql \
     POSTGRESQL_VERSION=9.6 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
-    POSTGRESQL_MODULE_HASH=5a0a295c9673c2a1 \
-    SHARED_USERSPACE_MODULE_HASH=e67c1e728d6aa7be
+    POSTGRESQL_MODULE_HASH=d87b0b15567e47f3
 
 LABEL summary = "PostgreSQL is an object-relational DBMS." \
       name = "$FGC/$NAME" \
@@ -78,7 +77,7 @@ RUN \
     microdnf install -y gettext && \
     # microdnf install -y nss_wrapper && \
     # microdnf install -y /usr/bin/python && \
-    sed 's|@POSTGRESQL_MODULE_HASH@|'${POSTGRESQL_MODULE_HASH}'|g; s|@SHARED_USERSPACE_MODULE_HASH@|'${SHARED_USERSPACE_MODULE_HASH}'|g; s|${basearch}|'${ARCH}'|g' < /tmp/module-postgresql.repo.in > /etc/yum.repos.d/module-postgresql.repo && rm -f /tmp/module-postgresql.repo.in && \
+    sed 's|@POSTGRESQL_MODULE_HASH@|'${POSTGRESQL_MODULE_HASH}'|g; s|${basearch}|'${ARCH}'|g' < /tmp/module-postgresql.repo.in > /etc/yum.repos.d/module-postgresql.repo && rm -f /tmp/module-postgresql.repo.in && \
     INSTALL_PKGS="postgresql postgresql-server" && \
     microdnf install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
