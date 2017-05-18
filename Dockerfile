@@ -36,7 +36,7 @@ LABEL summary = "PostgreSQL is an object-relational DBMS." \
       com.redhat.component="$NAME" \
       org.fedoraproject.component="postgresql" \
       authoritative-source-url="registry.fedoraproject.org" \
-      usage="docker run -v <dbroot_path>:/var/lib/pgsql:Z -v <dbdata_path>:/var/lib/pgsql/data:Z -p 5432:5432 -e POSTGRESQL_USER=<user> -e POSTGRESQL_PASSWORD=<password> -e POSTGRESQL_DATABASE=<database> modularitycontainers/postgresql" \
+      usage="docker run -v <dbroot_path>:/var/lib/pgsql:Z -p 5432:5432 -e POSTGRESQL_USER=<user> -e POSTGRESQL_PASSWORD=<password> -e POSTGRESQL_DATABASE=<database> modularitycontainers/postgresql" \
       io.k8s.description = "PostgreSQL is an advanced Object-Relational database management system (DBMS). This container contains the programs needed to create and run a PostgreSQL server, which will in turn allow you to create and maintain PostgreSQL databases." \
       io.k8s.display-name="PostgreSQL ${POSTGRESQL_VERSION}" \
       io.openshift.tags="database,postgresql,postgresql96" \
@@ -91,7 +91,7 @@ RUN \
 # Get prefix path and path to scripts rather than hard-code them in scripts
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql
 
-VOLUME ["/var/lib/pgsql/data"]
+VOLUME ["/var/lib/pgsql"]
 
 USER 26
 
