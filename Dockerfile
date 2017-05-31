@@ -7,6 +7,10 @@
 # - need a shared-userspace module repo enabled
 FROM baseruntime/baseruntime:latest
 
+# Notes: Current base-runtime images will enable a package repo with all
+# packages from the currently latest compose of Fedora 26/Boltron. Buyer
+# beware.
+
 # PostgreSQL container image
 # Exposed ports:
 #  * 5432/tcp - postgres
@@ -22,8 +26,7 @@ ENV NAME=postgresql \
     LC_ALL=C.UTF-8 \
     POSTGRESQL_VERSION=9.6 \
     HOME=/var/lib/pgsql \
-    PGUSER=postgres \
-    POSTGRESQL_MODULE_HASH=d87b0b15567e47f3
+    PGUSER=postgres
 
 LABEL summary = "PostgreSQL is an object-relational DBMS." \
       name = "$FGC/$NAME" \
@@ -46,7 +49,6 @@ EXPOSE 5432
 
 ADD root /
 
-COPY module-postgresql.repo.in /tmp/module-postgresql.repo.in
 COPY run_tests.sh /usr/bin/run_tests.sh
 
 # Install the postgresql server component.
@@ -56,28 +58,14 @@ COPY run_tests.sh /usr/bin/run_tests.sh
 # to make sure of that.
 
 # Notes about the below:
-# - first sed cmd: don't ask
-# - rpm -e ... microdnf install systemd: workaround to missing
-#   microdnf downgrade/distro-sync
-# - Update packages so everything available is current
-# - Need to have charset files, disable normal repo(s), enable module repo(s)
-# ORCHESTRATION:
-# - Newer versions of the shared-userspace module are supposed to have
-#   findutils, not there yet
 # - gettext: /usr/bin/envsubst
 # - no working python module yet
 
 RUN \
-    sed -i 's|/jkaluza/|/ralph/|g' /etc/yum.repos.d/build.repo && \
-    rpm -e --justdb --nodeps systemd-libs && \
-    microdnf install -y --setopt=tsflags=nodocs systemd && \
-    # microdnf update -y --setopt=tsflags=nodocs && \
-    # microdnf install -y glibc-locale-source && \
     microdnf install -y findutils && \
     microdnf install -y gettext && \
     # microdnf install -y nss_wrapper && \
     # microdnf install -y /usr/bin/python && \
-    sed 's|@POSTGRESQL_MODULE_HASH@|'${POSTGRESQL_MODULE_HASH}'|g; s|${basearch}|'${ARCH}'|g' < /tmp/module-postgresql.repo.in > /etc/yum.repos.d/module-postgresql.repo && rm -f /tmp/module-postgresql.repo.in && \
     INSTALL_PKGS="postgresql postgresql-server" && \
     microdnf install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
