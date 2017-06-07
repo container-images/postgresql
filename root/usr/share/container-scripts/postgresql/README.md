@@ -2,7 +2,7 @@ PostgreSQL Docker image
 =======================
 
 This repository contains Dockerfiles for PostgreSQL images for general usage and OpenShift.
-Users can choose between RHEL and CentOS based images.
+The image is based on the Base Runtime.
 
 
 Environment variables and volumes
@@ -11,27 +11,40 @@ Environment variables and volumes
 The image recognizes the following environment variables that you can set during
 initialization by passing `-e VAR=VALUE` to the Docker run command.
 
-|    Variable name             |    Description                                 |
-| :--------------------------- | ---------------------------------------------- |
-|  `POSTGRESQL_USER`           | User name for PostgreSQL account to be created |
-|  `POSTGRESQL_PASSWORD`       | Password for the user account                  |
-|  `POSTGRESQL_DATABASE`       | Database name                                  |
-|  `POSTGRESQL_ADMIN_PASSWORD` | Password for the `postgres` admin account (optional)     |
+`POSTGRESQL_USER`
+User name for PostgreSQL account to be created
+
+`POSTGRESQL_PASSWORD`
+Password for the user account
+
+`POSTGRESQL_DATABASE`
+Database name
+
+`POSTGRESQL_ADMIN_PASSWORD`
+Password for the `postgres` admin account (optional)
 
 The following environment variables influence the PostgreSQL configuration file. They are all optional.
 
-|    Variable name              |    Description                                                          |    Default
-| :---------------------------- | ----------------------------------------------------------------------- | -------------------------------
-|  `POSTGRESQL_MAX_CONNECTIONS` | The maximum number of client connections allowed |  100
-|  `POSTGRESQL_MAX_PREPARED_TRANSACTIONS` | Sets the maximum number of transactions that can be in the "prepared" state. If you are using prepared transactions, you will probably want this to be at least as large as max_connections |  0
-|  `POSTGRESQL_SHARED_BUFFERS`  | Sets how much memory is dedicated to PostgreSQL to use for caching data |  32M
-|  `POSTGRESQL_EFFECTIVE_CACHE_SIZE`  | Set to an estimate of how much memory is available for disk caching by the operating system and within the database itself |  128M
+`POSTGRESQL_MAX_CONNECTIONS`
+The maximum number of client connections allowed
+DEFAULT: 100
+
+`POSTGRESQL_MAX_PREPARED_TRANSACTIONS`
+Sets the maximum number of transactions that can be in the "prepared" state. If you are using prepared transactions, you will probably want this to be at least as large as max_connections
+DEFAULT: 0
+
+`POSTGRESQL_SHARED_BUFFERS`
+Sets how much memory is dedicated to PostgreSQL to use for caching data
+DEFAULT: 32M
+
+`POSTGRESQL_EFFECTIVE_CACHE_SIZE`
+Set to an estimate of how much memory is available for disk caching by the operating system and within the database itself
+DEFAULT: 128M
 
 You can also set the following mount points by passing the `-v /host:/container` flag to Docker.
 
-|  Volume mount point      | Description                           |
-| :----------------------- | ------------------------------------- |
-|  `/var/lib/pgsql/data`   | PostgreSQL database cluster directory |
+
+`/var/lib/pgsql/data`  PostgreSQL database cluster directory
 
 **Notice: When mouting a directory from the host into the container, ensure that the mounted
 directory has the appropriate permissions and that the owner and group of the directory
@@ -40,12 +53,12 @@ matches the user UID or name which is running inside the container.**
 Usage
 ----------------------
 
-For this, we will assume that you are using the `openshift/postgresql-92-centos7` image.
+For this, we will assume that you are using the `modularitycontainers/postgresql` image.
 If you want to set only the mandatory environment variables and not store the database
 in a host directory, execute the following command:
 
 ```
-$ docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 openshift/postgresql-92-centos7
+$ docker run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 modularitycontainers/postgresql
 ```
 
 This will create a container named `postgresql_database` running PostgreSQL with
@@ -95,4 +108,3 @@ the environment variables aforementioned will cause a mismatch between the
 values stored in the variables and the actual passwords. Whenever a database
 container starts it will reset the passwords to the values stored in the
 environment variables.
-
