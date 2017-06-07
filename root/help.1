@@ -1,0 +1,133 @@
+.TH PostgreSQL Docker image
+.PP
+This repository contains Dockerfiles for PostgreSQL images for general usage and OpenShift.
+The image is based on the Base Runtime.
+
+.SH Environment variables and volumes
+.PP
+The image recognizes the following environment variables that you can set during
+initialization by passing \fB\fC\-e VAR=VALUE\fR to the Docker run command.
+
+.PP
+\fB\fCPOSTGRESQL\_USER\fR
+.br
+User name for PostgreSQL account to be created
+
+.PP
+\fB\fCPOSTGRESQL\_PASSWORD\fR
+.br
+Password for the user account
+
+.PP
+\fB\fCPOSTGRESQL\_DATABASE\fR
+.br
+Database name
+
+.PP
+\fB\fCPOSTGRESQL\_ADMIN\_PASSWORD\fR
+Password for the \fB\fCpostgres\fR admin account (optional)
+
+.PP
+The following environment variables influence the PostgreSQL configuration file. They are all optional.
+
+.PP
+\fB\fCPOSTGRESQL\_MAX\_CONNECTIONS\fR
+.br
+The maximum number of client connections allowed
+DEFAULT: 100
+
+.PP
+\fB\fCPOSTGRESQL\_MAX\_PREPARED\_TRANSACTIONS\fR
+.br
+Sets the maximum number of transactions that can be in the "prepared" state. If you are using prepared transactions, you will probably want this to be at least as large as max\_connections
+DEFAULT: 0
+
+.PP
+\fB\fCPOSTGRESQL\_SHARED\_BUFFERS\fR
+.br
+Sets how much memory is dedicated to PostgreSQL to use for caching data
+DEFAULT: 32M
+
+.PP
+\fB\fCPOSTGRESQL\_EFFECTIVE\_CACHE\_SIZE\fR
+.br
+Set to an estimate of how much memory is available for disk caching by the operating system and within the database itself
+DEFAULT: 128M
+
+.PP
+You can also set the following mount points by passing the \fB\fC\-v /host:/container\fR flag to Docker.
+
+.PP
+\fB\fC/var/lib/pgsql/data\fR  PostgreSQL database cluster directory
+
+.PP
+\fBNotice: When mouting a directory from the host into the container, ensure that the mounted
+directory has the appropriate permissions and that the owner and group of the directory
+matches the user UID or name which is running inside the container.\fP
+
+.SH Usage
+.PP
+For this, we will assume that you are using the \fB\fCmodularitycontainers/postgresql\fR image.
+If you want to set only the mandatory environment variables and not store the database
+in a host directory, execute the following command:
+
+.PP
+.RS
+
+.nf
+$ docker run \-d \-\-name postgresql\_database \-e POSTGRESQL\_USER=user \-e POSTGRESQL\_PASSWORD=pass \-e POSTGRESQL\_DATABASE=db \-p 5432:5432 modularitycontainers/postgresql
+
+.fi
+.RE
+
+.PP
+This will create a container named \fB\fCpostgresql\_database\fR running PostgreSQL with
+database \fB\fCdb\fR and user with credentials \fB\fCuser:pass\fR. Port 5432 will be exposed
+and mapped to the host. If you want your database to be persistent across container
+executions, also add a \fB\fC\-v /host/db/path:/var/lib/pgsql/data\fR argument. This will be
+the PostgreSQL database cluster directory.
+
+.PP
+If the database cluster directory is not initialized, the entrypoint script will
+first run
+\[la]http://www.postgresql.org/docs/9.2/static/app-initdb.html\[ra]
+and setup necessary database users and passwords. After the database is initialized,
+or if it was already present,
+\[la]http://www.postgresql.org/docs/9.2/static/app-postgres.html\[ra]
+is executed and will run as PID 1. You can stop the detached container by running
+\fB\fCdocker stop postgresql\_database\fR.
+
+.SH PostgreSQL auto\-tuning
+.PP
+When the PostgreSQL image is run with the \fB\fC\-\-memory\fR parameter set and if there
+are no values provided for \fB\fCPOSTGRESQL\_SHARED\_BUFFERS\fR and
+\fB\fCPOSTGRESQL\_EFFECTIVE\_CACHE\_SIZE\fR those values are automatically calculated
+based on the value provided in the \fB\fC\-\-memory\fR parameter.
+
+.PP
+The values are calculated based on the
+
+\[la]https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server\[ra]
+formulas. For the \fB\fCshared\_buffers\fR we use 1/4 of given memory and for the
+\fB\fCeffective\_cache\_size\fR we set the value to 1/2 of the given memory.
+
+.SH PostgreSQL admin account
+.PP
+The admin account \fB\fCpostgres\fR has no password set by default, only allowing local
+connections.  You can set it by setting the \fB\fCPOSTGRESQL\_ADMIN\_PASSWORD\fR environment
+variable when initializing your container. This will allow you to login to the
+\fB\fCpostgres\fR account remotely. Local connections will still not require a password.
+
+.SH Changing passwords
+.PP
+Since passwords are part of the image configuration, the only supported method
+to change passwords for the database user (\fB\fCPOSTGRESQL\_USER\fR) and \fB\fCpostgres\fR
+admin user is by changing the environment variables \fB\fCPOSTGRESQL\_PASSWORD\fR and
+\fB\fCPOSTGRESQL\_ADMIN\_PASSWORD\fR, respectively.
+
+.PP
+Changing database passwords through SQL statements or any way other than through
+the environment variables aforementioned will cause a mismatch between the
+values stored in the variables and the actual passwords. Whenever a database
+container starts it will reset the passwords to the values stored in the
+environment variables.
