@@ -49,7 +49,7 @@ EXPOSE 5432
 
 ADD root /
 
-RUN mv /usr/share/container-scripts/postgresql/help.1 /help.1
+COPY root/help.1 /help.1
 
 COPY run_tests.sh /usr/bin/run_tests.sh
 

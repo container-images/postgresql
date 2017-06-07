@@ -2,7 +2,7 @@ PostgreSQL Docker image
 =======================
 
 This repository contains Dockerfiles for PostgreSQL images for general usage and OpenShift.
-Image is based on baseruntime.
+The image is based on the Base Runtime.
 
 
 Environment variables and volumes
