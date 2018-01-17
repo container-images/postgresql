@@ -51,8 +51,6 @@ ADD root /
 
 COPY root/help.1 /help.1
 
-COPY run_tests.sh /usr/bin/run_tests.sh
-
 # Install the postgresql server component.
 #
 # This image must forever use UID 26 for postgres user so our volumes are
